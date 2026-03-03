@@ -17,7 +17,7 @@
 <img src="https://img.shields.io/badge/-Cloudinary-3448C5?style=for-the-badge&logo=Cloudinary&logoColor=white" />
 <img src="https://img.shields.io/badge/-Arcjet-34388F?style=for-the-badge&logo=Arcjet&logoColor=white" /> 
 <img src="https://img.shields.io/badge/-Site24x7-26CD66?style=for-the-badge&logo=Site24x7&logoColor=white" />
-<img src="https://img.shields.io/badge/-CodeRabbit-FC5D13?style=for-the-badge&logo=CodeRabbit&logoColor=white" /> 
+<img src="https://img.shields.io/badge/-CodeRabbit-FC5D13?style=for-the-badge&logo=CodeRabbit&logoColor=white" />
 
   </div>
 
@@ -69,7 +69,6 @@ If you're getting started and need assistance or face any bugs, join our active 
 
 - **[Zod](https://zod.dev/)** is a TypeScript-first schema declaration and validation library. It is used to define data structures and validate them at runtime, ensuring type safety and reducing bugs by providing a single source of truth for both static types and data validation.
 
-
 ### Backend Stack
 
 - **[Arcjet](https://jsm.dev/pern-arcjet)** is a security-first tool that helps developers protect their applications with just a few lines of code. It provides security primitives for rate limiting, bot protection, email validation, and sensitive data masking, ensuring the application remains secure and resilient.
@@ -87,10 +86,10 @@ If you're getting started and need assistance or face any bugs, join our active 
 - **[Node.js](https://nodejs.org/)** is an open-source, cross-platform JavaScript runtime environment that executes JavaScript code outside a web browser. It is designed to build scalable network applications and serves as the foundation for the project's backend logic.
 
 ### Dev Tools
+
 - **[CodeRabbit](https://jsm.dev/pern-coderabbit)** is an AI-powered code review platform that provides automated, contextual feedback on pull requests. It helps developers improve code quality and catch potential bugs early by integrating directly into the development workflow.
 
 - **[Site24x7](https://jsm.dev/pern-site24x7)** is a comprehensive monitoring solution that provides deep insights into application performance and infrastructure health. It allows for real-time tracking of uptime, end-user experience, and server metrics to ensure maximum availability.
-
 
 ## <a name="features">🔋 Features</a>
 
@@ -179,7 +178,6 @@ detailed explanations, cool features, and exercises to boost your skills. Give i
 <a href="https://jsm.dev/pern-jsmpro" target="_blank">
   <img src="public/readme/readme-jsmpro.webp" alt="Project Banner">
 </a>
-
 
 ## Learn More about Refine
 
