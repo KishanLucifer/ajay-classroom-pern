@@ -61,15 +61,13 @@ export function DataTableFilterDropdown<TData>({
               "text-muted-foreground": !isFiltered,
             },
             triggerClassName
-          )}
-        >
+          )}>
           <ListFilter className={cn("!h-3", "!w-3")} />
         </Button>
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className={cn("w-full", "shadow-sm", contentClassName)}
-      >
+        className={cn("w-full", "shadow-sm", contentClassName)}>
         {children({ isOpen, setIsOpen })}
       </PopoverContent>
     </Popover>
@@ -102,8 +100,7 @@ export function DataTableFilterDropdownActions({
         "w-full",
         "gap-2",
         className
-      )}
-    >
+      )}>
       <Button
         size="sm"
         variant="ghost"
@@ -116,8 +113,7 @@ export function DataTableFilterDropdownActions({
         )}
         onClick={() => {
           onClear();
-        }}
-      >
+        }}>
         <X className={cn("w-3.5", "h-3.5", "text-muted-foreground")} />
         {t("buttons.clear", "Clear")}
       </Button>
@@ -128,8 +124,7 @@ export function DataTableFilterDropdownActions({
         className={cn("rounded-sm", "text-xs", "font-semibold")}
         onClick={() => {
           onApply();
-        }}
-      >
+        }}>
         {t("buttons.apply", "Apply")}
       </Button>
     </div>
@@ -331,8 +326,7 @@ export function DataTableFilterCombobox<TData>({
                   "justify-start",
                   "h-auto",
                   "min-h-9"
-                )}
-              >
+                )}>
                 <div className={cn("flex", "gap-2", "w-full")}>
                   {multiple && currentValues.length > 0 ? (
                     <div className={cn("flex", "flex-wrap", "gap-1", "flex-1")}>
@@ -349,8 +343,7 @@ export function DataTableFilterCombobox<TData>({
                               "h-4",
                               "pr-0.5",
                               "rounded-sm"
-                            )}
-                          >
+                            )}>
                             <span className={cn("text-[10px]", "leading-4")}>
                               {label}
                             </span>
@@ -372,8 +365,7 @@ export function DataTableFilterCombobox<TData>({
                                 e.preventDefault();
                                 e.stopPropagation();
                                 handleRemove(val);
-                              }}
-                            >
+                              }}>
                               <X className={cn("!h-2", "!w-2")} />
                             </span>
                           </Badge>
@@ -384,8 +376,7 @@ export function DataTableFilterCombobox<TData>({
                             "text-xs",
                             "text-muted-foreground",
                             "px-1"
-                          )}
-                        >
+                          )}>
                           +{currentValues.length - 3} more
                         </span>
                       )}
@@ -398,8 +389,7 @@ export function DataTableFilterCombobox<TData>({
                         "text-start",
                         "text-xs",
                         currentValues.length === 0 && "text-muted-foreground"
-                      )}
-                    >
+                      )}>
                       {getDisplayText()}
                     </span>
                   )}
@@ -429,8 +419,7 @@ export function DataTableFilterCombobox<TData>({
                         key={option.value}
                         value={option.value}
                         onSelect={() => handleSelect(option.value)}
-                        keywords={option.label?.split(" ") ?? []}
-                      >
+                        keywords={option.label?.split(" ") ?? []}>
                         {option.label}
                         <Check
                           className={cn(
@@ -504,8 +493,7 @@ export function DataTableFilterDropdownDateSinglePicker<TData>({
   return (
     <DataTableFilterDropdown
       column={column}
-      contentClassName={cn("w-fit", "p-0")}
-    >
+      contentClassName={cn("w-fit", "p-0")}>
       {({ setIsOpen }) => {
         return (
           <div
@@ -516,8 +504,7 @@ export function DataTableFilterDropdownDateSinglePicker<TData>({
                 handleApply();
                 setIsOpen(false);
               }
-            }}
-          >
+            }}>
             <Calendar
               mode="single"
               selected={filterValue}
@@ -612,8 +599,7 @@ export function DataTableFilterDropdownDateRangePicker<TData>({
   return (
     <DataTableFilterDropdown
       column={column}
-      contentClassName={cn("w-fit", "p-0")}
-    >
+      contentClassName={cn("w-fit", "p-0")}>
       {({ setIsOpen }) => {
         return (
           <div
@@ -624,8 +610,7 @@ export function DataTableFilterDropdownDateRangePicker<TData>({
                 handleApply();
                 setIsOpen(false);
               }
-            }}
-          >
+            }}>
             <Calendar
               mode="range"
               numberOfMonths={2}
@@ -736,11 +721,9 @@ export function DataTableFilterInput<TData>({
                 handleApply();
                 setIsOpen(false);
               }
-            }}
-          >
+            }}>
             <div
-              className={cn("grid", "grid-cols-1", "md:grid-cols-2", "gap-2")}
-            >
+              className={cn("grid", "grid-cols-1", "md:grid-cols-2", "gap-2")}>
               {operatorsFromProps && operatorsFromProps.length > 1 && (
                 <DataTableFilterOperatorSelect
                   value={operator}
@@ -866,6 +849,14 @@ const CRUD_OPERATOR_LABELS: Record<
     i18nKey: "table.filter.operator.nendswiths",
     defaultLabel: "Not ends with (case sensitive)",
   },
+  eqs: {
+    i18nKey: "",
+    defaultLabel: "",
+  },
+  nes: {
+    i18nKey: "",
+    defaultLabel: "",
+  },
 };
 
 export type DataTableFilterOperatorSelectProps = {
@@ -919,8 +910,7 @@ export function DataTableFilterOperatorSelect({
             "justify-between",
             "truncate",
             triggerClassName
-          )}
-        >
+          )}>
           <div className={cn("truncate")}>
             {selectedLabel ?? placeholderText}
           </div>
@@ -942,8 +932,7 @@ export function DataTableFilterOperatorSelect({
                   onSelect={() => {
                     onValueChange(op as CrudOperators);
                     setOpen(false);
-                  }}
-                >
+                  }}>
                   <Check
                     className={cn(
                       "mr-2",
