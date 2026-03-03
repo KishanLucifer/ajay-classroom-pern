@@ -9,8 +9,8 @@
     "moduleResolution": "node",
 
     /* Project structure */
-    "rootDir": "src",
-    "outDir": "dist",
+    "rootDir": "./src",
+    "outDir": "./dist",
 
     /* Type safety */
     "strict": true,
