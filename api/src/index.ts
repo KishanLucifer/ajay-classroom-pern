@@ -16,7 +16,7 @@ import enrollmentsRouter from "./routes/enrollments.js";
 import { auth } from "./lib/auth.js";
 
 const app = express();
-const PORT = 8000;
+const PORT = process.env.PORT || 8000;
 
 app.use(
   cors({
