@@ -19,10 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
 import { CreateView } from "@/components/refine-ui/views/create-view";
 import { Breadcrumb } from "@/components/refine-ui/layout/breadcrumb";
-
 import { Textarea } from "@/components/ui/textarea";
 import { useBack, useList } from "@refinedev/core";
 import { Loader2 } from "lucide-react";

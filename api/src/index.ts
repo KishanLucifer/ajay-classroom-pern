@@ -1,3 +1,4 @@
+import "dotenv/config";
 import("apminsight")
   .then(({ default: AgentAPI }) => AgentAPI.config())
   .catch(() => console.log("APM not available in this environment"));
@@ -18,14 +19,22 @@ import securityMiddleware from "./middleware/security.js";
 const app = express();
 const PORT = process.env.PORT || 8000;
 
+// app.use(
+//   cors({
+//     origin: process.env.FRONTEND_URL, // React app URL
+//     methods: ["GET", "POST", "PUT", "DELETE"], // Specify allowed HTTP methods
+//     credentials: true, // allow cookies
+//   })
+// );
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL, // React app URL
-    methods: ["GET", "POST", "PUT", "DELETE"], // Specify allowed HTTP methods
-    credentials: true, // allow cookies
+    origin: process.env.FRONTEND_URL,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
+    optionsSuccessStatus: 200,
   })
 );
-
 app.all("/api/auth/*splat", toNodeHandler(auth));
 
 app.use(express.json());
