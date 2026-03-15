@@ -19,17 +19,25 @@ const timestamps = {
 
 export const roleEnum = pgEnum("role", ["student", "teacher", "admin"]);
 
-export const user = pgTable("user", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  email: text("email").notNull(),
-  emailVerified: boolean("email_verified").notNull(),
-  image: text("image"),
-  role: roleEnum("role").notNull().default("student"),
-  imageCldPubId: text("image_cld_pub_id"),
+export const user = pgTable(
+  "user",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    email: text("email").notNull(),
+    emailVerified: boolean("email_verified").notNull(),
+    image: text("image"),
+    role: roleEnum("role").notNull().default("student"),
+    imageCldPubId: text("image_cld_pub_id"),
 
-  ...timestamps,
-});
+    ...timestamps,
+  },
+  (table) => ({
+    roleIdx: index("user_role_idx").on(table.role),
+    emailIdx: index("user_email_idx").on(table.email),
+    createdAtIdx: index("user_created_at_idx").on(table.createdAt),
+  })
+);
 
 export const session = pgTable(
   "session",

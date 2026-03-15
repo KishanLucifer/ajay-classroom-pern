@@ -3,6 +3,7 @@ import { desc, eq, getTableColumns, sql } from "drizzle-orm";
 
 import { db } from "../db/index.js";
 import { classes, departments, subjects, user } from "../db/schema/index.js";
+import { clampInt } from "../lib/pagination.js";
 
 const router = express.Router();
 
@@ -50,8 +51,8 @@ router.get("/overview", async (req, res) => {
 // Latest activity summaries
 router.get("/latest", async (req, res) => {
   try {
-    const { limit = 5 } = req.query;
-    const limitPerPage = Math.max(1, +limit);
+    const { limit } = req.query;
+    const limitPerPage = clampInt(limit, 5, 1, 20);
 
     const [latestClasses, latestTeachers] = await Promise.all([
       db

@@ -7,6 +7,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
 import { user } from "./auth.js";
@@ -25,28 +26,45 @@ export const classStatusEnum = pgEnum("class_status", [
   "archived",
 ]);
 
-export const departments = pgTable("departments", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  code: varchar("code", { length: 50 }).notNull().unique(),
-  name: varchar("name", { length: 255 }).notNull(),
-  description: text("description"),
+export const departments = pgTable(
+  "departments",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    code: varchar("code", { length: 50 }).notNull().unique(),
+    name: varchar("name", { length: 255 }).notNull(),
+    description: text("description"),
 
-  ...timestamps,
-});
+    ...timestamps,
+  },
+  (table) => ({
+    nameIdx: index("departments_name_idx").on(table.name),
+    codeIdx: index("departments_code_idx").on(table.code),
+    createdAtIdx: index("departments_created_at_idx").on(table.createdAt),
+  })
+);
 
-export const subjects = pgTable("subjects", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+export const subjects = pgTable(
+  "subjects",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
 
-  departmentId: integer("department_id")
-    .notNull()
-    .references(() => departments.id, { onDelete: "restrict" }),
+    departmentId: integer("department_id")
+      .notNull()
+      .references(() => departments.id, { onDelete: "restrict" }),
 
-  name: varchar("name", { length: 255 }).notNull(),
-  code: varchar("code", { length: 50 }).notNull().unique(),
-  description: text("description"),
+    name: varchar("name", { length: 255 }).notNull(),
+    code: varchar("code", { length: 50 }).notNull().unique(),
+    description: text("description"),
 
-  ...timestamps,
-});
+    ...timestamps,
+  },
+  (table) => ({
+    nameIdx: index("subjects_name_idx").on(table.name),
+    codeIdx: index("subjects_code_idx").on(table.code),
+    departmentIdIdx: index("subjects_department_id_idx").on(table.departmentId),
+    createdAtIdx: index("subjects_created_at_idx").on(table.createdAt),
+  })
+);
 
 export const classes = pgTable(
   "classes",
@@ -74,6 +92,7 @@ export const classes = pgTable(
   (table) => ({
     subjectIdIdx: index("classes_subject_id_idx").on(table.subjectId),
     teacherIdIdx: index("classes_teacher_id_idx").on(table.teacherId),
+    createdAtIdx: index("classes_created_at_idx").on(table.createdAt),
   })
 );
 
@@ -94,7 +113,7 @@ export const enrollments = pgTable(
   (table) => ({
     studentIdIdx: index("enrollments_student_id_idx").on(table.studentId),
     classIdIdx: index("enrollments_class_id_idx").on(table.classId),
-    studentClassUnique: index("enrollments_student_class_unique").on(
+    studentClassUnique: uniqueIndex("enrollments_student_class_unique").on(
       table.studentId,
       table.classId
     ),

@@ -50,18 +50,15 @@ router.post("/", async (req, res) => {
         .json({ error: "classId and studentId are required" });
     }
 
-    const [classRecord] = await db
-      .select()
-      .from(classes)
-      .where(eq(classes.id, classId));
+    const [classResult, studentResult] = await Promise.all([
+      db.select().from(classes).where(eq(classes.id, classId)),
+      db.select().from(user).where(eq(user.id, studentId)),
+    ]);
+
+    const classRecord = classResult[0];
+    const student = studentResult[0];
 
     if (!classRecord) return res.status(404).json({ error: "Class not found" });
-
-    const [student] = await db
-      .select()
-      .from(user)
-      .where(eq(user.id, studentId));
-
     if (!student) return res.status(404).json({ error: "Student not found" });
 
     const [existingEnrollment] = await db
@@ -92,6 +89,16 @@ router.post("/", async (req, res) => {
     res.status(201).json({ data: enrollment });
   } catch (error) {
     console.error("POST /enrollments error:", error);
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === "23505"
+    ) {
+      return res
+        .status(409)
+        .json({ error: "Student already enrolled in class" });
+    }
     res.status(500).json({ error: "Failed to create enrollment" });
   }
 });
@@ -107,18 +114,15 @@ router.post("/join", async (req, res) => {
         .json({ error: "inviteCode and studentId are required" });
     }
 
-    const [classRecord] = await db
-      .select()
-      .from(classes)
-      .where(eq(classes.inviteCode, inviteCode));
+    const [classResult, studentResult] = await Promise.all([
+      db.select().from(classes).where(eq(classes.inviteCode, inviteCode)),
+      db.select().from(user).where(eq(user.id, studentId)),
+    ]);
+
+    const classRecord = classResult[0];
+    const student = studentResult[0];
 
     if (!classRecord) return res.status(404).json({ error: "Class not found" });
-
-    const [student] = await db
-      .select()
-      .from(user)
-      .where(eq(user.id, studentId));
-
     if (!student) return res.status(404).json({ error: "Student not found" });
 
     const [existingEnrollment] = await db
@@ -149,6 +153,16 @@ router.post("/join", async (req, res) => {
     res.status(201).json({ data: enrollment });
   } catch (error) {
     console.error("POST /enrollments/join error:", error);
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === "23505"
+    ) {
+      return res
+        .status(409)
+        .json({ error: "Student already enrolled in class" });
+    }
     res.status(500).json({ error: "Failed to join class" });
   }
 });

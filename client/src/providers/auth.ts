@@ -1,6 +1,85 @@
 import type { AuthProvider } from "@refinedev/core";
 import { User, SignUpPayload } from "@/types";
 import { authClient } from "@/lib/auth-client";
+import { BACKEND_BASE_URL } from "@/constants";
+
+let cachedUser: User | null = null;
+let cachedUserRaw: string | null = null;
+let sessionCache: { user: User | null; fetchedAt: number } | null = null;
+const SESSION_CACHE_TTL_MS = 10_000;
+
+const getCachedUser = (): User | null => {
+  const raw = localStorage.getItem("user");
+  if (!raw) {
+    cachedUser = null;
+    cachedUserRaw = null;
+    return null;
+  }
+
+  if (raw === cachedUserRaw && cachedUser) {
+    return cachedUser;
+  }
+
+  try {
+    cachedUser = JSON.parse(raw) as User;
+    cachedUserRaw = raw;
+    return cachedUser;
+  } catch {
+    cachedUser = null;
+    cachedUserRaw = null;
+    return null;
+  }
+};
+
+const setCachedUser = (user: User) => {
+  const raw = JSON.stringify(user);
+  cachedUser = user;
+  cachedUserRaw = raw;
+  sessionCache = {
+    user,
+    fetchedAt: Date.now(),
+  };
+  localStorage.setItem("user", raw);
+};
+
+const clearCachedUser = () => {
+  cachedUser = null;
+  cachedUserRaw = null;
+  sessionCache = null;
+  localStorage.removeItem("user");
+};
+
+const fetchSession = async (): Promise<User | null> => {
+  if (
+    sessionCache &&
+    Date.now() - sessionCache.fetchedAt < SESSION_CACHE_TTL_MS
+  ) {
+    return sessionCache.user;
+  }
+
+  const response = await fetch(`${BACKEND_BASE_URL}/api/auth/get-session`, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const payload = (await response.json()) as
+    | { user?: User | null; session?: unknown }
+    | null;
+  const user = payload?.user ?? null;
+  sessionCache = {
+    user,
+    fetchedAt: Date.now(),
+  };
+  return user;
+};
 
 export const authProvider: AuthProvider = {
   register: async ({
@@ -33,7 +112,7 @@ export const authProvider: AuthProvider = {
       }
 
       // Store user data
-      localStorage.setItem("user", JSON.stringify(data.user));
+      setCachedUser(data.user as User);
 
       return {
         success: true,
@@ -69,7 +148,7 @@ export const authProvider: AuthProvider = {
       }
 
       // Store user data
-      localStorage.setItem("user", JSON.stringify(data.user));
+      setCachedUser(data.user as User);
 
       return {
         success: true,
@@ -100,7 +179,7 @@ export const authProvider: AuthProvider = {
       };
     }
 
-    localStorage.removeItem("user");
+    clearCachedUser();
 
     return {
       success: true,
@@ -117,12 +196,20 @@ export const authProvider: AuthProvider = {
     return { error };
   },
   check: async () => {
-    const user = localStorage.getItem("user");
+    try {
+      const sessionUser = await fetchSession();
 
-    if (user) {
-      return {
-        authenticated: true,
-      };
+      if (sessionUser) {
+        setCachedUser(sessionUser);
+        return {
+          authenticated: true,
+        };
+      }
+
+      clearCachedUser();
+    } catch (error) {
+      console.error("Session check failed:", error);
+      clearCachedUser();
     }
 
     return {
@@ -136,20 +223,18 @@ export const authProvider: AuthProvider = {
     };
   },
   getPermissions: async () => {
-    const user = localStorage.getItem("user");
+    const parsedUser = getCachedUser();
 
-    if (!user) return null;
-    const parsedUser: User = JSON.parse(user);
+    if (!parsedUser) return null;
 
     return {
       role: parsedUser.role,
     };
   },
   getIdentity: async () => {
-    const user = localStorage.getItem("user");
+    const parsedUser = getCachedUser();
 
-    if (!user) return null;
-    const parsedUser: User = JSON.parse(user);
+    if (!parsedUser) return null;
 
     return {
       id: parsedUser.id,

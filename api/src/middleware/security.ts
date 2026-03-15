@@ -4,6 +4,37 @@ import type { NextFunction, Request, Response } from "express";
 
 import aj from "../config/arcjet.js";
 
+const rateLimitClients = {
+  admin: aj.withRule(
+    slidingWindow({
+      mode: "LIVE",
+      interval: "1m",
+      max: 20,
+    })
+  ),
+  teacher: aj.withRule(
+    slidingWindow({
+      mode: "LIVE",
+      interval: "1m",
+      max: 10,
+    })
+  ),
+  student: aj.withRule(
+    slidingWindow({
+      mode: "LIVE",
+      interval: "1m",
+      max: 10,
+    })
+  ),
+  guest: aj.withRule(
+    slidingWindow({
+      mode: "LIVE",
+      interval: "1m",
+      max: 5,
+    })
+  ),
+};
+
 const securityMiddleware = async (
   req: Request,
   res: Response,
@@ -17,33 +48,23 @@ const securityMiddleware = async (
   try {
     const role: RateLimitRole = req.user?.role ?? "guest";
 
-    let limit: number;
     let message: string;
 
     switch (role) {
       case "admin":
-        limit = 20;
         message = "Admin request limit exceeded (20 per minute). Slow down!";
         break;
       case "teacher":
       case "student":
-        limit = 10;
         message = "User request limit exceeded (10 per minute). Please wait.";
         break;
       default:
-        limit = 5;
         message =
           "Guest request limit exceeded (5 per minute). Please sign up for higher limits.";
         break;
     }
 
-    const client = aj.withRule(
-      slidingWindow({
-        mode: "LIVE",
-        interval: "1m",
-        max: limit,
-      })
-    );
+    const client = rateLimitClients[role] ?? rateLimitClients.guest;
 
     const arcjetRequest: ArcjetNodeRequest = {
       headers: req.headers,
