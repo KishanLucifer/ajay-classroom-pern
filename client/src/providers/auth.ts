@@ -1,5 +1,5 @@
 import type { AuthProvider } from "@refinedev/core";
-import { User, SignUpPayload } from "@/types";
+import { User, SignUpPayload, UserRole } from "@/types";
 import { authClient } from "@/lib/auth-client";
 import { BACKEND_BASE_URL } from "@/constants";
 
@@ -7,6 +7,55 @@ let cachedUser: User | null = null;
 let cachedUserRaw: string | null = null;
 let sessionCache: { user: User | null; fetchedAt: number } | null = null;
 const SESSION_CACHE_TTL_MS = 10_000;
+
+type AuthUserInput = {
+  id: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  email: string;
+  name: string;
+  image?: string | null;
+  imageCldPubId?: string | null;
+  role?: UserRole | null;
+};
+
+const isAuthUserInput = (value: unknown): value is AuthUserInput => {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Record<string, unknown>;
+  const hasString = (key: string) => typeof candidate[key] === "string";
+  const hasDateLike = (key: string) =>
+    typeof candidate[key] === "string" || candidate[key] instanceof Date;
+
+  return (
+    hasString("id") &&
+    hasString("email") &&
+    hasString("name") &&
+    hasDateLike("createdAt") &&
+    hasDateLike("updatedAt")
+  );
+};
+
+const normalizeAuthUser = (input: AuthUserInput): User => {
+  const existing = getCachedUser();
+  const role = input.role ?? existing?.role ?? UserRole.STUDENT;
+
+  return {
+    id: input.id,
+    createdAt:
+      input.createdAt instanceof Date
+        ? input.createdAt.toISOString()
+        : input.createdAt,
+    updatedAt:
+      input.updatedAt instanceof Date
+        ? input.updatedAt.toISOString()
+        : input.updatedAt,
+    email: input.email,
+    name: input.name,
+    role,
+    image: input.image ?? undefined,
+    imageCldPubId: input.imageCldPubId ?? undefined,
+  };
+};
 
 const getCachedUser = (): User | null => {
   const raw = localStorage.getItem("user");
@@ -71,9 +120,11 @@ const fetchSession = async (): Promise<User | null> => {
   }
 
   const payload = (await response.json()) as
-    | { user?: User | null; session?: unknown }
+    | { user?: AuthUserInput | null; session?: unknown }
     | null;
-  const user = payload?.user ?? null;
+  const user = payload?.user && isAuthUserInput(payload.user)
+    ? normalizeAuthUser(payload.user)
+    : null;
   sessionCache = {
     user,
     fetchedAt: Date.now(),
@@ -112,7 +163,9 @@ export const authProvider: AuthProvider = {
       }
 
       // Store user data
-      setCachedUser(data.user as User);
+      if (data.user && isAuthUserInput(data.user)) {
+        setCachedUser(normalizeAuthUser(data.user));
+      }
 
       return {
         success: true,
@@ -148,7 +201,9 @@ export const authProvider: AuthProvider = {
       }
 
       // Store user data
-      setCachedUser(data.user as User);
+      if (data.user && isAuthUserInput(data.user)) {
+        setCachedUser(normalizeAuthUser(data.user));
+      }
 
       return {
         success: true,
