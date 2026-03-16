@@ -4,11 +4,12 @@ import { and, desc, eq, getTableColumns, ilike, or, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { classes, departments, enrollments, subjects, user } from "../db/schema/index.js";
 import { getPagination } from "../lib/pagination.js";
+import { cacheResponse } from "../middleware/cache.js";
 
 const router = express.Router();
 
 // Get all classes with optional search, subject, teacher filters, and pagination
-router.get("/", async (req, res) => {
+router.get("/", cacheResponse(5000), async (req, res) => {
   try {
     const { search, subject, teacher, page, limit } = req.query;
     const { page: currentPage, limit: limitPerPage, offset } = getPagination(
@@ -120,7 +121,7 @@ router.post("/", async (req, res) => {
 });
 
 // Get class details with counts
-router.get("/:id", async (req, res) => {
+router.get("/:id", cacheResponse(5000), async (req, res) => {
   try {
     const classId = Number(req.params.id);
 
@@ -159,7 +160,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // List users in a class by role with pagination
-router.get("/:id/users", async (req, res) => {
+router.get("/:id/users", cacheResponse(5000), async (req, res) => {
   try {
     const classId = Number(req.params.id);
     const { role, page, limit } = req.query;

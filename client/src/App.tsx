@@ -8,6 +8,7 @@ import routerProvider, {
   UnsavedChangesNotifier,
 } from "@refinedev/react-router";
 import { BrowserRouter, Outlet, Route, Routes } from "react-router";
+import { useEffect } from "react";
 import "./App.css";
 import { Toaster } from "./components/refine-ui/notification/toaster";
 import { useNotificationProvider } from "./components/refine-ui/notification/use-notification-provider";
@@ -41,8 +42,33 @@ import FacultyShow from "./pages/faculty/show";
 import EnrollmentsCreate from "./pages/enrollments/create";
 import EnrollmentsJoin from "./pages/enrollments/join";
 import EnrollmentConfirm from "./pages/enrollments/confirm";
+import { BACKEND_BASE_URL } from "./constants";
 
 function App() {
+  useEffect(() => {
+    const controller = new AbortController();
+    const warmup = async () => {
+      try {
+        await Promise.all([
+          fetch(`${BACKEND_BASE_URL}/api/stats/overview`, {
+            credentials: "include",
+            signal: controller.signal,
+          }),
+          fetch(`${BACKEND_BASE_URL}/api/stats/charts`, {
+            credentials: "include",
+            signal: controller.signal,
+          }),
+        ]);
+      } catch {
+        // Best-effort warmup only.
+      }
+    };
+
+    warmup();
+
+    return () => controller.abort();
+  }, []);
+
   return (
     <BrowserRouter>
       <RefineKbarProvider>

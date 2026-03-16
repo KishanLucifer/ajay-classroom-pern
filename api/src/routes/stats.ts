@@ -4,11 +4,12 @@ import { desc, eq, getTableColumns, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { classes, departments, subjects, user } from "../db/schema/index.js";
 import { clampInt } from "../lib/pagination.js";
+import { cacheResponse } from "../middleware/cache.js";
 
 const router = express.Router();
 
 // Overview counts for core entities
-router.get("/overview", async (req, res) => {
+router.get("/overview", cacheResponse(15000), async (req, res) => {
   try {
     const [
       usersCount,
@@ -49,7 +50,7 @@ router.get("/overview", async (req, res) => {
 });
 
 // Latest activity summaries
-router.get("/latest", async (req, res) => {
+router.get("/latest", cacheResponse(15000), async (req, res) => {
   try {
     const { limit } = req.query;
     const limitPerPage = clampInt(limit, 5, 1, 20);
@@ -91,7 +92,7 @@ router.get("/latest", async (req, res) => {
 });
 
 // Aggregates for charts
-router.get("/charts", async (req, res) => {
+router.get("/charts", cacheResponse(30000), async (req, res) => {
   try {
     const [usersByRole, subjectsByDepartment, classesBySubject] =
       await Promise.all([

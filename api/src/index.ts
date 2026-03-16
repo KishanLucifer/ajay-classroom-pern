@@ -15,6 +15,8 @@ import enrollmentsRouter from "./routes/enrollments.js";
 
 import { auth } from "./lib/auth.js";
 import securityMiddleware from "./middleware/security.js";
+import { warmDb } from "./db/index.js";
+import { clearResponseCache } from "./middleware/cache.js";
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -40,6 +42,12 @@ app.all("/api/auth/*splat", toNodeHandler(auth));
 app.use(express.json());
 
 app.use(securityMiddleware);
+app.use((req, _res, next) => {
+  if (req.method !== "GET") {
+    clearResponseCache();
+  }
+  next();
+});
 
 app.use("/api/subjects", subjectsRouter);
 app.use("/api/users", usersRouter);
@@ -55,3 +63,12 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
+
+warmDb()
+  .then(() => console.log("Database warmed"))
+  .catch((error) =>
+    console.warn(
+      "Database warmup failed:",
+      error instanceof Error ? error.message : error
+    )
+  );

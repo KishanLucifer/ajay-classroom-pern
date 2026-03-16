@@ -10,11 +10,12 @@ import {
   user,
 } from "../db/schema/index.js";
 import { getPagination } from "../lib/pagination.js";
+import { cacheResponse } from "../middleware/cache.js";
 
 const router = express.Router();
 
 // Get all departments with optional search and pagination
-router.get("/", async (req, res) => {
+router.get("/", cacheResponse(5000), async (req, res) => {
   try {
     const { search, page, limit } = req.query;
     const { page: currentPage, limit: limitPerPage, offset } = getPagination(
@@ -91,7 +92,7 @@ router.post("/", async (req, res) => {
 });
 
 // Get department details with counts
-router.get("/:id", async (req, res) => {
+router.get("/:id", cacheResponse(5000), async (req, res) => {
   try {
     const departmentId = Number(req.params.id);
 
@@ -150,7 +151,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // List subjects in a department with pagination
-router.get("/:id/subjects", async (req, res) => {
+router.get("/:id/subjects", cacheResponse(5000), async (req, res) => {
   try {
     const departmentId = Number(req.params.id);
     const { page, limit } = req.query;
@@ -198,7 +199,7 @@ router.get("/:id/subjects", async (req, res) => {
 });
 
 // List classes in a department with pagination
-router.get("/:id/classes", async (req, res) => {
+router.get("/:id/classes", cacheResponse(5000), async (req, res) => {
   try {
     const departmentId = Number(req.params.id);
     const { page, limit } = req.query;
@@ -255,7 +256,7 @@ router.get("/:id/classes", async (req, res) => {
 });
 
 // List users in a department by role with pagination
-router.get("/:id/users", async (req, res) => {
+router.get("/:id/users", cacheResponse(5000), async (req, res) => {
   try {
     const departmentId = Number(req.params.id);
     const { role, page, limit } = req.query;

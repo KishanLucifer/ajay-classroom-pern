@@ -4,11 +4,12 @@ import { and, desc, eq, ilike, or, sql, getTableColumns } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { classes, departments, enrollments, subjects, user } from "../db/schema/index.js";
 import { getPagination } from "../lib/pagination.js";
+import { cacheResponse } from "../middleware/cache.js";
 
 const router = express.Router();
 
 // Get all users with optional search, role filter, and pagination
-router.get("/", async (req, res) => {
+router.get("/", cacheResponse(5000), async (req, res) => {
   try {
     const { search, role, page, limit } = req.query;
     const { page: currentPage, limit: limitPerPage, offset } = getPagination(
@@ -63,7 +64,7 @@ router.get("/", async (req, res) => {
 });
 
 // Get user details with role-specific data
-router.get("/:id", async (req, res) => {
+router.get("/:id", cacheResponse(5000), async (req, res) => {
   try {
     const userId = req.params.id;
 
@@ -84,7 +85,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // List departments associated with a user
-router.get("/:id/departments", async (req, res) => {
+router.get("/:id/departments", cacheResponse(5000), async (req, res) => {
   try {
     const userId = req.params.id;
     const { page, limit } = req.query;
@@ -192,7 +193,7 @@ router.get("/:id/departments", async (req, res) => {
 });
 
 // List subjects associated with a user
-router.get("/:id/subjects", async (req, res) => {
+router.get("/:id/subjects", cacheResponse(5000), async (req, res) => {
   try {
     const userId = req.params.id;
     const { page, limit } = req.query;
