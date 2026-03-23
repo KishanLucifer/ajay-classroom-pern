@@ -10,6 +10,7 @@
 // export const db = drizzle(sql);
 import { drizzle } from "drizzle-orm/neon-serverless";
 import { Pool } from "@neondatabase/serverless";
+import * as schema from "./schema/index.js";
 
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -18,7 +19,7 @@ export const pool = new Pool({
   connectionTimeoutMillis: 5_000,
 });
 
-export const db = drizzle(pool);
+export const db = drizzle(pool, { schema });
 
 const withTimeout = async <T>(promise: Promise<T>, ms: number) => {
   let timeoutId: NodeJS.Timeout | undefined;

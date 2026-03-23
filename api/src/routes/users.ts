@@ -1,5 +1,5 @@
 import express from "express";
-import { and, desc, eq, ilike, or, sql, getTableColumns } from "drizzle-orm";
+import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 
 import { db } from "../db/index.js";
 import { classes, departments, enrollments, subjects, user } from "../db/schema/index.js";
@@ -116,64 +116,63 @@ router.get("/:id/departments", cacheResponse(5000), async (req, res) => {
       limit
     );
 
-    const [countResult, departmentsList] =
-      userRecord.role === "teacher"
-        ? await Promise.all([
-            db
-              .select({ count: sql<number>`count(distinct ${departments.id})` })
-              .from(departments)
-              .leftJoin(subjects, eq(subjects.departmentId, departments.id))
-              .leftJoin(classes, eq(classes.subjectId, subjects.id))
-              .where(eq(classes.teacherId, userId)),
-            db
-              .select({
-                ...getTableColumns(departments),
-              })
-              .from(departments)
-              .leftJoin(subjects, eq(subjects.departmentId, departments.id))
-              .leftJoin(classes, eq(classes.subjectId, subjects.id))
-              .where(eq(classes.teacherId, userId))
-              .groupBy(
-                departments.id,
-                departments.code,
-                departments.name,
-                departments.description,
-                departments.createdAt,
-                departments.updatedAt
-              )
-              .orderBy(desc(departments.createdAt))
-              .limit(limitPerPage)
-              .offset(offset),
-          ])
-        : await Promise.all([
-            db
-              .select({ count: sql<number>`count(distinct ${departments.id})` })
-              .from(departments)
-              .leftJoin(subjects, eq(subjects.departmentId, departments.id))
-              .leftJoin(classes, eq(classes.subjectId, subjects.id))
-              .leftJoin(enrollments, eq(enrollments.classId, classes.id))
-              .where(eq(enrollments.studentId, userId)),
-            db
-              .select({
-                ...getTableColumns(departments),
-              })
-              .from(departments)
-              .leftJoin(subjects, eq(subjects.departmentId, departments.id))
-              .leftJoin(classes, eq(classes.subjectId, subjects.id))
-              .leftJoin(enrollments, eq(enrollments.classId, classes.id))
-              .where(eq(enrollments.studentId, userId))
-              .groupBy(
-                departments.id,
-                departments.code,
-                departments.name,
-                departments.description,
-                departments.createdAt,
-                departments.updatedAt
-              )
-              .orderBy(desc(departments.createdAt))
-              .limit(limitPerPage)
-              .offset(offset),
-          ]);
+    let countResult, departmentsList;
+
+    if (userRecord.role === "teacher") {
+      [countResult, departmentsList] = await Promise.all([
+        db
+          .select({ count: sql<number>`count(distinct ${departments.id})` })
+          .from(departments)
+          .leftJoin(subjects, eq(subjects.departmentId, departments.id))
+          .leftJoin(classes, eq(classes.subjectId, subjects.id))
+          .where(eq(classes.teacherId, userId)),
+        db
+          .select({
+            id: departments.id,
+            code: departments.code,
+            name: departments.name,
+            description: departments.description,
+            createdAt: departments.createdAt,
+            updatedAt: departments.updatedAt,
+          })
+          .from(departments)
+          .leftJoin(subjects, eq(subjects.departmentId, departments.id))
+          .leftJoin(classes, eq(classes.subjectId, subjects.id))
+          .where(eq(classes.teacherId, userId))
+          .groupBy(departments.id)
+          .orderBy(desc(departments.createdAt))
+          .limit(limitPerPage)
+          .offset(offset),
+      ]);
+    } else {
+      [countResult, departmentsList] = await Promise.all([
+        db
+          .select({ count: sql<number>`count(distinct ${departments.id})` })
+          .from(departments)
+          .leftJoin(subjects, eq(subjects.departmentId, departments.id))
+          .leftJoin(classes, eq(classes.subjectId, subjects.id))
+          .leftJoin(enrollments, eq(enrollments.classId, classes.id))
+          .where(eq(enrollments.studentId, userId)),
+        db
+          .select({
+            id: departments.id,
+            code: departments.code,
+            name: departments.name,
+            description: departments.description,
+            createdAt: departments.createdAt,
+            updatedAt: departments.updatedAt,
+          })
+          .from(departments)
+          .leftJoin(subjects, eq(subjects.departmentId, departments.id))
+          .leftJoin(classes, eq(classes.subjectId, subjects.id))
+          .leftJoin(enrollments, eq(enrollments.classId, classes.id))
+          .where(eq(enrollments.studentId, userId))
+          .groupBy(departments.id)
+          .orderBy(desc(departments.createdAt))
+          .limit(limitPerPage)
+          .offset(offset),
+      ]);
+    }
 
     const totalCount = countResult[0]?.count ?? 0;
 
@@ -224,84 +223,45 @@ router.get("/:id/subjects", cacheResponse(5000), async (req, res) => {
       limit
     );
 
-    const [countResult, subjectsList] =
-      userRecord.role === "teacher"
-        ? await Promise.all([
-            db
-              .select({ count: sql<number>`count(distinct ${subjects.id})` })
-              .from(subjects)
-              .leftJoin(classes, eq(classes.subjectId, subjects.id))
-              .where(eq(classes.teacherId, userId)),
-            db
-              .select({
-                ...getTableColumns(subjects),
-                department: {
-                  ...getTableColumns(departments),
-                },
-              })
-              .from(subjects)
-              .leftJoin(departments, eq(subjects.departmentId, departments.id))
-              .leftJoin(classes, eq(classes.subjectId, subjects.id))
-              .where(eq(classes.teacherId, userId))
-              .groupBy(
-                subjects.id,
-                subjects.departmentId,
-                subjects.name,
-                subjects.code,
-                subjects.description,
-                subjects.createdAt,
-                subjects.updatedAt,
-                departments.id,
-                departments.code,
-                departments.name,
-                departments.description,
-                departments.createdAt,
-                departments.updatedAt
-              )
-              .orderBy(desc(subjects.createdAt))
-              .limit(limitPerPage)
-              .offset(offset),
-          ])
-        : await Promise.all([
-            db
-              .select({ count: sql<number>`count(distinct ${subjects.id})` })
-              .from(subjects)
-              .leftJoin(classes, eq(classes.subjectId, subjects.id))
-              .leftJoin(enrollments, eq(enrollments.classId, classes.id))
-              .where(eq(enrollments.studentId, userId)),
-            db
-              .select({
-                ...getTableColumns(subjects),
-                department: {
-                  ...getTableColumns(departments),
-                },
-              })
-              .from(subjects)
-              .leftJoin(departments, eq(subjects.departmentId, departments.id))
-              .leftJoin(classes, eq(classes.subjectId, subjects.id))
-              .leftJoin(enrollments, eq(enrollments.classId, classes.id))
-              .where(eq(enrollments.studentId, userId))
-              .groupBy(
-                subjects.id,
-                subjects.departmentId,
-                subjects.name,
-                subjects.code,
-                subjects.description,
-                subjects.createdAt,
-                subjects.updatedAt,
-                departments.id,
-                departments.code,
-                departments.name,
-                departments.description,
-                departments.createdAt,
-                departments.updatedAt
-              )
-              .orderBy(desc(subjects.createdAt))
-              .limit(limitPerPage)
-              .offset(offset),
-          ]);
+    const teacherQuery = db
+      .select({ count: sql<number>`count(distinct ${subjects.id})` })
+      .from(subjects)
+      .leftJoin(classes, eq(classes.subjectId, subjects.id))
+      .where(eq(classes.teacherId, userId))
+      .then((res) => res[0]?.count ?? 0);
 
-    const totalCount = countResult[0]?.count ?? 0;
+    const studentQuery = db
+      .select({ count: sql<number>`count(distinct ${subjects.id})` })
+      .from(subjects)
+      .leftJoin(classes, eq(classes.subjectId, subjects.id))
+      .leftJoin(enrollments, eq(enrollments.classId, classes.id))
+      .where(eq(enrollments.studentId, userId))
+      .then((res) => res[0]?.count ?? 0);
+
+    const teacherSubjects = db.query.subjects.findMany({
+      where: eq(classes.teacherId, userId),
+      with: {
+        department: true,
+      },
+      orderBy: desc(subjects.createdAt),
+      limit: limitPerPage,
+      offset,
+    });
+
+    const studentSubjects = db.query.subjects.findMany({
+      where: eq(enrollments.studentId, userId),
+      with: {
+        department: true,
+      },
+      orderBy: desc(subjects.createdAt),
+      limit: limitPerPage,
+      offset,
+    });
+
+    const [totalCount, subjectsList] =
+      userRecord.role === "teacher"
+        ? await Promise.all([teacherQuery, teacherSubjects])
+        : await Promise.all([studentQuery, studentSubjects]);
 
     res.status(200).json({
       data: subjectsList,

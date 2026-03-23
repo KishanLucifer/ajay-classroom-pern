@@ -42,9 +42,9 @@ app.all("/api/auth/*splat", toNodeHandler(auth));
 app.use(express.json());
 
 app.use(securityMiddleware);
-app.use((req, _res, next) => {
+app.use(async (req, _res, next) => {
   if (req.method !== "GET") {
-    clearResponseCache();
+    await clearResponseCache();
   }
   next();
 });

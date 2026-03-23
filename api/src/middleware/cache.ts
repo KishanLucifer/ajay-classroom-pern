@@ -1,66 +1,68 @@
 import type { NextFunction, Request, Response } from "express";
+import { redis } from "../lib/redis.js";
 
 type CacheEntry = {
-  expiresAt: number;
   status: number;
   body: string;
   headers: Record<string, string>;
 };
 
-const responseCache = new Map<string, CacheEntry>();
-
-const getCacheKey = (req: Request) => req.originalUrl ?? req.url;
+const getCacheKey = (req: Request) => `cache:${req.originalUrl ?? req.url}`;
 
 export const cacheResponse =
-  (ttlMs: number) => (req: Request, res: Response, next: NextFunction) => {
+  (ttlMs: number) => async (req: Request, res: Response, next: NextFunction) => {
     if (req.method !== "GET") return next();
 
     const key = getCacheKey(req);
-    const cached = responseCache.get(key);
-    if (cached && cached.expiresAt > Date.now()) {
-      res.status(cached.status);
-      for (const [header, value] of Object.entries(cached.headers)) {
-        res.setHeader(header, value);
+    try {
+      const cached = await redis.get(key);
+      if (cached) {
+        const parsed = JSON.parse(cached) as CacheEntry;
+        res.status(parsed.status);
+        for (const [header, value] of Object.entries(parsed.headers)) {
+          res.setHeader(header, value);
+        }
+        res.setHeader("X-Cache", "HIT");
+        return res.send(parsed.body);
       }
-      return res.send(cached.body);
+    } catch (error) {
+      console.error("Redis cache get error:", error);
     }
 
-    const originalJson = res.json.bind(res);
     const originalSend = res.send.bind(res);
 
-    res.json = (body) => {
-      const payload = JSON.stringify(body);
-      responseCache.set(key, {
-        expiresAt: Date.now() + ttlMs,
+    res.send = (body) => {
+      const payload = typeof body === "string" ? body : JSON.stringify(body);
+      
+      const headers: Record<string, string> = {
+        "Content-Type": res.get("Content-Type") || "application/json; charset=utf-8",
+      };
+
+      const entry: CacheEntry = {
         status: res.statusCode,
         body: payload,
-        headers: {
-          "Content-Type": "application/json; charset=utf-8",
-          "Cache-Control": "private, max-age=5",
-        },
-      });
-      res.setHeader("Cache-Control", "private, max-age=5");
-      return originalSend(payload);
-    };
+        headers,
+      };
 
-    res.send = (body) => {
-      if (typeof body === "string") {
-        responseCache.set(key, {
-          expiresAt: Date.now() + ttlMs,
-          status: res.statusCode,
-          body,
-          headers: {
-            "Cache-Control": "private, max-age=5",
-          },
-        });
-        res.setHeader("Cache-Control", "private, max-age=5");
-      }
+      redis.set(key, JSON.stringify(entry), "PX", ttlMs).catch((err) => {
+        console.error("Redis cache set error:", err);
+      });
+
+      res.setHeader("X-Cache", "MISS");
       return originalSend(body);
     };
 
     return next();
   };
 
-export const clearResponseCache = () => {
-  responseCache.clear();
+export const clearResponseCache = async () => {
+  try {
+    const keys = await redis.keys("cache:*");
+    if (keys.length > 0) {
+      await redis.del(...keys);
+      console.log(`Cleared ${keys.length} cache keys`);
+    }
+  } catch (error) {
+    console.error("Redis cache clear error:", error);
+  }
 };

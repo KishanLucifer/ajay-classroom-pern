@@ -1,10 +1,10 @@
 import express from "express";
-import { and, desc, eq, getTableColumns, ilike, or, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 
 import { db } from "../db/index.js";
 import { classes, departments, enrollments, subjects, user } from "../db/schema/index.js";
 import { getPagination } from "../lib/pagination.js";
-import { cacheResponse } from "../middleware/cache.js";
+import { cacheResponse, clearResponseCache } from "../middleware/cache.js";
 
 const router = express.Router();
 
@@ -39,33 +39,32 @@ router.get("/", cacheResponse(5000), async (req, res) => {
     const whereClause =
       filterConditions.length > 0 ? and(...filterConditions) : undefined;
 
-    const [countResult, classesList] = await Promise.all([
-      db
-        .select({ count: sql<number>`count(*)` })
-        .from(classes)
-        .leftJoin(subjects, eq(classes.subjectId, subjects.id))
-        .leftJoin(user, eq(classes.teacherId, user.id))
-        .where(whereClause),
-      db
-        .select({
-          ...getTableColumns(classes),
-          subject: {
-            ...getTableColumns(subjects),
-          },
-          teacher: {
-            ...getTableColumns(user),
-          },
-        })
-        .from(classes)
-        .leftJoin(subjects, eq(classes.subjectId, subjects.id))
-        .leftJoin(user, eq(classes.teacherId, user.id))
-        .where(whereClause)
-        .orderBy(desc(classes.createdAt))
-        .limit(limitPerPage)
-        .offset(offset),
+    const qb = db
+      .select({ id: classes.id })
+      .from(classes)
+      .leftJoin(subjects, eq(classes.subjectId, subjects.id))
+      .leftJoin(user, eq(classes.teacherId, user.id))
+      .where(whereClause);
+
+    const [countResult, classIds] = await Promise.all([
+      db.select({ count: sql<number>`count(*)` }).from(qb.as("qb")),
+      qb.orderBy(desc(classes.createdAt)).limit(limitPerPage).offset(offset),
     ]);
 
     const totalCount = countResult[0]?.count ?? 0;
+    const ids = classIds.map((c) => c.id);
+
+    const classesList =
+      ids.length > 0
+        ? await db.query.classes.findMany({
+            where: (c, { inArray }) => inArray(c.id, ids),
+            with: {
+              subject: true,
+              teacher: true,
+            },
+            orderBy: desc(classes.createdAt),
+          })
+        : [];
 
     res.status(200).json({
       data: classesList,
@@ -113,6 +112,7 @@ router.post("/", async (req, res) => {
 
     if (!createdClass) throw Error;
 
+    clearResponseCache();
     res.status(201).json({ data: createdClass });
   } catch (error) {
     console.error("POST /classes error:", error);
@@ -129,24 +129,17 @@ router.get("/:id", cacheResponse(5000), async (req, res) => {
       return res.status(400).json({ error: "Invalid class id" });
     }
 
-    const [classDetails] = await db
-      .select({
-        ...getTableColumns(classes),
+    const classDetails = await db.query.classes.findFirst({
+      where: eq(classes.id, classId),
+      with: {
+        teacher: true,
         subject: {
-          ...getTableColumns(subjects),
+          with: {
+            department: true,
+          },
         },
-        department: {
-          ...getTableColumns(departments),
-        },
-        teacher: {
-          ...getTableColumns(user),
-        },
-      })
-      .from(classes)
-      .leftJoin(subjects, eq(classes.subjectId, subjects.id))
-      .leftJoin(departments, eq(subjects.departmentId, departments.id))
-      .leftJoin(user, eq(classes.teacherId, user.id))
-      .where(eq(classes.id, classId));
+      },
+    });
 
     if (!classDetails) {
       return res.status(404).json({ error: "Class not found" });
