@@ -21,13 +21,6 @@ import { clearResponseCache } from "./middleware/cache.js";
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-// app.use(
-//   cors({
-//     origin: process.env.FRONTEND_URL, // React app URL
-//     methods: ["GET", "POST", "PUT", "DELETE"], // Specify allowed HTTP methods
-//     credentials: true, // allow cookies
-//   })
-// );
 app.use(
   cors({
     origin: process.env.FRONTEND_URL,
