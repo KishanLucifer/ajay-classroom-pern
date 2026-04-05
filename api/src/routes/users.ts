@@ -11,7 +11,9 @@ const router = express.Router();
 // Get all users with optional search, role filter, and pagination
 router.get("/", cacheResponse(5000), async (req, res) => {
   try {
-    const { search, role, page, limit } = req.query;
+    const search = req.query.search as string | undefined;
+    const role = req.query.role as string | undefined;
+    const { page, limit } = req.query;
     const { page: currentPage, limit: limitPerPage, offset } = getPagination(
       page,
       limit
@@ -66,7 +68,7 @@ router.get("/", cacheResponse(5000), async (req, res) => {
 // Get user details with role-specific data
 router.get("/:id", cacheResponse(5000), async (req, res) => {
   try {
-    const userId = req.params.id;
+    const userId = req.params.id as string;
 
     const [userRecord] = await db
       .select()
@@ -87,7 +89,7 @@ router.get("/:id", cacheResponse(5000), async (req, res) => {
 // List departments associated with a user
 router.get("/:id/departments", cacheResponse(5000), async (req, res) => {
   try {
-    const userId = req.params.id;
+    const userId = req.params.id as string;
     const { page, limit } = req.query;
 
     const [userRecord] = await db
@@ -195,7 +197,7 @@ router.get("/:id/departments", cacheResponse(5000), async (req, res) => {
 // List subjects associated with a user
 router.get("/:id/subjects", cacheResponse(5000), async (req, res) => {
   try {
-    const userId = req.params.id;
+    const userId = req.params.id as string;
     const { page, limit } = req.query;
 
     const [userRecord] = await db
