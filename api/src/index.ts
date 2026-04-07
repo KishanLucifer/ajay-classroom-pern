@@ -49,8 +49,16 @@ app.use("/api/departments", departmentsRouter);
 app.use("/api/stats", statsRouter);
 app.use("/api/enrollments", enrollmentsRouter);
 
-app.get("/", (req, res) => {
-  res.send("Backend server is running!");
+import { redis } from "./lib/redis.js";
+
+app.get("/", async (req, res) => {
+  try {
+    await redis.ping();
+    res.send("Backend server is running! connected to Redis");
+  } catch(e) {
+    res.send("Backend server is running! (Redis failed)");
+  }
+  
 });
 
 app.listen(PORT, () => {
