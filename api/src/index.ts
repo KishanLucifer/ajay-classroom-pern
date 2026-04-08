@@ -17,6 +17,7 @@ import { auth } from "./lib/auth.js";
 import securityMiddleware from "./middleware/security.js";
 import { warmDb } from "./db/index.js";
 import { clearResponseCache } from "./middleware/cache.js";
+import { analyticsMiddleware } from "./middleware/analytics.js";
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -35,6 +36,7 @@ app.all("/api/auth/*splat", toNodeHandler(auth));
 app.use(express.json());
 
 app.use(securityMiddleware);
+app.use(analyticsMiddleware);
 app.use((req, _res, next) => {
   if (req.method !== "GET") {
     clearResponseCache();

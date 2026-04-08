@@ -6,7 +6,7 @@ if (!process.env.DATABASE_URL) {
 }
 
 export default defineConfig({
-  schema: "../api/src/db/schema/index.ts",
+  schema: "../api/src/db/schema/*.ts",
   out: "../api/drizzle",
   dialect: "postgresql",
   dbCredentials: {

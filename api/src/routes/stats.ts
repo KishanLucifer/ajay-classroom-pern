@@ -2,7 +2,7 @@ import express from "express";
 import { desc, eq, getTableColumns, sql } from "drizzle-orm";
 
 import { db } from "../db/index.js";
-import { classes, departments, subjects, user } from "../db/schema/index.js";
+import { classes, departments, subjects, user, siteVisits } from "../db/schema/index.js";
 import { clampInt } from "../lib/pagination.js";
 import { cacheResponse } from "../middleware/cache.js";
 
@@ -133,6 +133,39 @@ router.get("/charts", cacheResponse(30000), async (req, res) => {
   } catch (error) {
     console.error("GET /stats/charts error:", error);
     res.status(500).json({ error: "Failed to fetch chart stats" });
+  }
+});
+
+// Analytics tracking data
+router.get("/analytics", async (req, res) => {
+  try {
+    const { limit = "50" } = req.query;
+    const limitNum = clampInt(limit as string, 50, 1, 500);
+
+    const visits = await db
+      .select()
+      .from(siteVisits)
+      .orderBy(desc(siteVisits.visitedAt))
+      .limit(limitNum);
+
+    const stats = await db
+      .select({
+        country: siteVisits.country,
+        count: sql<number>`count(*)`,
+      })
+      .from(siteVisits)
+      .groupBy(siteVisits.country)
+      .orderBy(desc(sql`count(*)`));
+
+    res.status(200).json({
+      data: {
+        recentVisits: visits,
+        visitsByCountry: stats,
+      },
+    });
+  } catch (error) {
+    console.error("GET /stats/analytics error:", error);
+    res.status(500).json({ error: "Failed to fetch analytics" });
   }
 });
 

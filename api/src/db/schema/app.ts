@@ -120,6 +120,24 @@ export const enrollments = pgTable(
   })
 );
 
+export const siteVisits = pgTable(
+  "site_visits",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    ipAddress: varchar("ip_address", { length: 45 }),
+    city: varchar("city", { length: 255 }),
+    region: varchar("region", { length: 255 }),
+    country: varchar("country", { length: 255 }),
+    userAgent: text("user_agent"),
+    path: text("path"),
+    visitedAt: timestamp("visited_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    ipAddressIdx: index("site_visits_ip_address_idx").on(table.ipAddress),
+    visitedAtIdx: index("site_visits_visited_at_idx").on(table.visitedAt),
+  })
+);
+
 export const departmentsRelations = relations(departments, ({ many }) => ({
   subjects: many(subjects),
 }));
@@ -166,3 +184,6 @@ export type NewClass = typeof classes.$inferInsert;
 
 export type Enrollment = typeof enrollments.$inferSelect;
 export type NewEnrollment = typeof enrollments.$inferInsert;
+
+export type SiteVisit = typeof siteVisits.$inferSelect;
+export type NewSiteVisit = typeof siteVisits.$inferInsert;
