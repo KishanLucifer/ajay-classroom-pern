@@ -40,7 +40,7 @@ export const warmDb = async (retries = 3, delayMs = 500) => {
 
   while (attempt <= retries) {
     try {
-      await withTimeout(pool.query("select 1"), 4000);
+      await withTimeout(pool.query("select 1"), 10000);
       return;
     } catch (error) {
       attempt += 1;
