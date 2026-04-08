@@ -36,5 +36,6 @@ export const auth = betterAuth({
       httpOnly: true,
     },
     useSecureCookies: true,
+    trustedProxyHeaders: true,
   },
 });
